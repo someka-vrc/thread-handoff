@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "thread-handoff/log.schema.json",
+  "title": "<thread-id>-log.jsonl の1行",
+  "description": "1行1件の意思決定。キーは properties の順に並べる（x-keyOrder）。値の文字列は1行で、バックスラッシュを含まない。",
+  "x-keyOrder": true,
+  "$ref": "#/$defs/entry",
+  "$defs": {
+    "line": {
+      "description": "1行の文字列。改行とバックスラッシュを含まない",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\r\\n\\\\]*$"
+    },
+    "entry": {
+      "type": "object",
+      "required": ["date", "title", "decision", "why", "by"],
+      "properties": {
+        "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        "title": { "$ref": "#/$defs/line" },
+        "decision": { "$ref": "#/$defs/line" },
+        "why": { "$ref": "#/$defs/line" },
+        "by": { "enum": ["user", "ai"] },
+        "files": { "type": "array", "items": { "$ref": "#/$defs/line" } }
+      },
+      "additionalProperties": false
+    }
+  }
+}

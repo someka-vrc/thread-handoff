@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "thread-handoff/state.schema.json",
+  "title": "<thread-id>-STATE.jsonl の1行",
+  "description": "行の種類は先頭のキーで決まる。type が meta なら meta、type が note なら note、id で始まれば task。meta は1行目に1つだけ。キーは properties の順に並べる（x-keyOrder）。値の文字列は1行で、バックスラッシュを含まない。x-warnMaxLength は目安の字数で、超えると警告になる。",
+  "x-keyOrder": true,
+  "oneOf": [
+    { "$ref": "#/$defs/meta" },
+    { "$ref": "#/$defs/note" },
+    { "$ref": "#/$defs/task" }
+  ],
+  "$defs": {
+    "line": {
+      "description": "1行の文字列。改行とバックスラッシュを含まない（引用符は「」を使う。JSON の \\\" は読み込み後に \" になるので問題ない）",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\r\\n\\\\]*$"
+    },
+    "taskId": {
+      "type": "string",
+      "pattern": "^[0-9]{3}(-[0-9]{3})?$"
+    },
+    "meta": {
+      "type": "object",
+      "required": ["type", "thread", "title"],
+      "properties": {
+        "type": { "const": "meta" },
+        "thread": { "type": "string", "pattern": "^[^/\\\\\\s]+$" },
+        "title": { "$ref": "#/$defs/line", "x-warnMaxLength": 20 },
+        "ticket": { "$ref": "#/$defs/line" },
+        "branch": { "$ref": "#/$defs/line" },
+        "worktree": { "$ref": "#/$defs/line" }
+      },
+      "additionalProperties": { "$ref": "#/$defs/line" }
+    },
+    "note": {
+      "type": "object",
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "note" },
+        "text": { "$ref": "#/$defs/line", "x-warnMaxLength": 100 },
+        "until": { "$ref": "#/$defs/line" },
+        "promote": { "$ref": "#/$defs/line" }
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        { "required": ["until"] },
+        { "required": ["promote"] }
+      ]
+    },
+    "task": {
+      "type": "object",
+      "required": ["id", "status", "title"],
+      "properties": {
+        "id": { "$ref": "#/$defs/taskId" },
+        "status": { "enum": ["doing", "next", "later"] },
+        "title": { "$ref": "#/$defs/line" },
+        "detail": { "$ref": "#/$defs/line", "x-warnMaxLength": 150 },
+        "dependsOn": { "type": "array", "items": { "$ref": "#/$defs/taskId" } },
+        "waitingOn": { "enum": ["human", "client"] },
+        "refs": { "type": "array", "items": { "$ref": "#/$defs/line" } }
+      },
+      "additionalProperties": false
+    }
+  }
+}
